@@ -340,7 +340,13 @@
       left:16px;right:16px;top:auto;bottom:96px;width:auto;padding:18px 20px;
     }
     .mcard h3{font-size:1.2rem}
-    #hero .scroll-hint{bottom:88px}
+    /* hero: avoid overlap on short mobile viewports */
+    #hero{justify-content:center;padding:40px 18px 110px}
+    #hero h1{margin-top:6px}
+    #hero .sub{margin-top:16px}
+    #hero .actions{margin-top:26px;width:100%;max-width:340px;flex-direction:column}
+    #hero .actions .btn{width:100%}
+    #hero .scroll-hint{position:static;transform:none;bottom:auto;margin-top:26px}
     section.block{padding:70px 0}
   }
 </style>
