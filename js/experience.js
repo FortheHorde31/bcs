@@ -73,9 +73,9 @@ const PARTICLES_VERT = /* glsl */ `
     float dist = -mv.z;
     float ps = uSize * uPixelRatio * (0.6 + aSeed * 0.8) * (1.0 + pm * 0.4)
              * (30.0 / max(2.0, dist));
-    gl_PointSize = min(ps, 9.0 * uPixelRatio); // без гигантских блобов у камеры
+    gl_PointSize = min(ps, 7.0 * uPixelRatio); // без гигантских блобов у камеры
     vMix = pm;
-    vNear = smoothstep(1.5, 5.0, dist);        // частицы у объектива растворяются
+    vNear = smoothstep(2.5, 7.0, dist);        // частицы у объектива растворяются
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -93,7 +93,7 @@ const PARTICLES_FRAG = /* glsl */ `
     vec3 light = vec3(0.94, 0.97, 1.00);
     vec3 col = mix(dim, blue, vMix);
     col = mix(col, light, uCollapse * 0.85);
-    float alpha = a * (0.20 + vMix * 0.3) * vNear * (1.0 - uCollapse * 0.45);
+    float alpha = a * (0.10 + vMix * 0.16) * vNear * (1.0 - uCollapse * 0.45);
     gl_FragColor = vec4(col, alpha);
   }
 `;
@@ -375,9 +375,9 @@ export class Experience {
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.bloom = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.5,   // strength
+      0.35,  // strength
       0.5,   // radius
-      0.8    // threshold
+      0.85   // threshold
     );
     this.composer.addPass(this.bloom);
   }
@@ -442,10 +442,10 @@ export class Experience {
       m.scale.setScalar(0.001 + on * (0.6 + 0.08 * Math.sin(t * 2.2 + i * 1.7)));
     }
 
-    // точка входа: растёт на схлопывании
-    const eg = Math.max(state.rings * 0.35, state.collapse * 0.7);
+    // точка входа: растёт на схлопывании (сдержанно — не засвечивать текст CTA)
+    const eg = Math.max(state.rings * 0.35, state.collapse * 0.45);
     this.endGlow.material.opacity = eg;
-    this.endGlow.scale.setScalar(0.3 + state.rings * 0.7 + state.collapse * 2.0 + 0.1 * Math.sin(t * 1.6));
+    this.endGlow.scale.setScalar(0.3 + state.rings * 0.7 + state.collapse * 0.9 + 0.06 * Math.sin(t * 1.6));
 
     // орбиты
     for (const ring of this.ringsGroup.children) {

@@ -169,13 +169,14 @@ const cardsTl = gsap.timeline({
 });
 
 cards.forEach((card, i) => {
+  // быстрый вход/выход, долгое «плато» — карточка почти всегда непрозрачна
   cardsTl.fromTo(card,
     { autoAlpha: 0, y: 28 },
-    { autoAlpha: 1, y: 0, duration: 0.3, immediateRender: false },
+    { autoAlpha: 1, y: 0, duration: 0.16, immediateRender: false },
     i
   );
   if (i < cards.length - 1) {
-    cardsTl.to(card, { autoAlpha: 0, y: -22, duration: 0.3 }, i + 0.7);
+    cardsTl.to(card, { autoAlpha: 0, y: -22, duration: 0.16 }, i + 0.84);
   }
 });
 
