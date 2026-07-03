@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>БКС — Навигатор по рынку. Откройте брокерский счёт</title>
+  <meta name="description" content="Рынок — это пространство тысяч маршрутов. БКС — навигатор, который прокладывает ваш. 30 лет опыта, 6 пройденных кризисов. Откройте счёт за 5 минут." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- Прелоадер -->
+  <div id="loader" aria-hidden="true">
+    <div class="loader-mark">БКС</div>
+    <div class="loader-line"><span></span></div>
+  </div>
+
+  <!-- WebGL-мир -->
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <!-- Прогресс маршрута -->
+  <div class="route-progress" aria-hidden="true"><span></span><i></i></div>
+
+  <header class="site-header">
+    <a class="logo" href="#hero" data-scroll-to="#hero" aria-label="БКС — на начало страницы">
+      БКС <span>Мир инвестиций</span>
+    </a>
+    <a class="btn btn--ghost" href="#open" data-scroll-to="#open">Открыть счёт</a>
+  </header>
+
+  <main id="journey">
+
+    <!-- 1. ШУМ -->
+    <section class="scene scene--hero" id="hero" data-scene="hero">
+      <div class="scene-content">
+        <p class="eyebrow reveal">БКС · 30 лет на рынке</p>
+        <h1 class="reveal">Рынок шумит.<br />Но не для&nbsp;всех.</h1>
+        <p class="lead reveal">Миллионы сделок в секунду. Тысячи мнений. Бесконечный шум.
+        За ним скрыта структура — и&nbsp;мы умеем её читать.</p>
+        <div class="scroll-cue reveal" aria-hidden="true">
+          <span>Листайте — покажем рынок изнутри</span>
+          <svg width="16" height="24" viewBox="0 0 16 24" fill="none" aria-hidden="true">
+            <rect x="1" y="1" width="14" height="22" rx="7" stroke="currentColor" stroke-width="1.5"/>
+            <circle class="cue-dot" cx="8" cy="8" r="2" fill="currentColor"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ТЕНЬ ГРАФИКА -->
+    <section class="scene scene--shadow" data-scene="shadow">
+      <div class="scene-content scene-content--left">
+        <p class="eyebrow reveal">01 · Поверхность</p>
+        <h2 class="reveal">График — это тень рынка.</h2>
+        <p class="lead reveal">Свечи и котировки показывают только прошлое.
+        Решения принимаются глубже — там, где из&nbsp;хаоса рождаются траектории.</p>
+      </div>
+    </section>
+
+    <!-- 3. ПРОСТРАНСТВО ВАРИАНТОВ -->
+    <section class="scene scene--space" data-scene="space">
+      <div class="scene-content">
+        <p class="eyebrow reveal">02 · Пространство вариантов</p>
+        <h2 class="reveal">Каждый день рынок открывает тысячи маршрутов.</h2>
+        <div class="staged">
+          <p class="stage-line reveal">Одни ведут к цели.</p>
+          <p class="stage-line stage-line--dim reveal">Большинство — в тупик.</p>
+          <p class="stage-line stage-line--key reveal">Разница видна только тем,<br />кто прошёл этот путь раньше вас.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. НАВИГАТОР -->
+    <section class="scene scene--navigator" data-scene="navigator">
+      <div class="scene-content scene-content--left">
+        <p class="eyebrow eyebrow--gold reveal">03 · Навигатор</p>
+        <h2 class="reveal">БКС — это <em>навигатор</em>.</h2>
+        <p class="lead reveal">Мы не предлагаем вам угадывать. 30&nbsp;лет мы наносим рынок
+        на&nbsp;карту: аналитика, риск-модели, опыт шести кризисов. Из&nbsp;тысяч траекторий
+        мы прокладываем ту, что отвечает вашей цели.</p>
+        <ul class="chips reveal">
+          <li>100+ аналитиков и стратегов</li>
+          <li>30 лет экспертизы</li>
+          <li>Аналитика по 1000+ инструментам</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 5. ТАЙМЛАЙН -->
+    <section class="scene scene--timeline" data-scene="timeline">
+      <div class="timeline-pin">
+        <div class="timeline-head">
+          <p class="eyebrow eyebrow--gold reveal">04 · Проверено временем</p>
+          <h2 class="reveal">Этот маршрут проверен<br />шестью кризисами.</h2>
+        </div>
+
+        <div class="timeline-cards">
+          <article class="tcard" data-index="0">
+            <span class="tcard-year">1995</span>
+            <h3>Старт</h3>
+            <p>Один офис в Новосибирске. Принцип, который не&nbsp;изменился до&nbsp;сих пор:
+            сначала анализ — потом сделка.</p>
+          </article>
+          <article class="tcard" data-index="1">
+            <span class="tcard-year">1998</span>
+            <h3>Дефолт</h3>
+            <p>Рынок теряет доверие — БКС делает ставку на&nbsp;прозрачность
+            и&nbsp;остаётся рядом с&nbsp;клиентами.</p>
+          </article>
+          <article class="tcard" data-index="2">
+            <span class="tcard-year">2008</span>
+            <h3>Мировой кризис</h3>
+            <p>Жёсткий риск-менеджмент — портфели клиентов защищены
+            от&nbsp;худшего сценария.</p>
+          </article>
+          <article class="tcard" data-index="3">
+            <span class="tcard-year">2014</span>
+            <h3>Валютный шок</h3>
+            <p>Хеджирование и&nbsp;диверсификация становятся стандартом
+            каждой стратегии.</p>
+          </article>
+          <article class="tcard" data-index="4">
+            <span class="tcard-year">2020</span>
+            <h3>Пандемия</h3>
+            <p>Полный переход в&nbsp;цифру за&nbsp;недели — и&nbsp;рекордный приток
+            частных инвесторов.</p>
+          </article>
+          <article class="tcard" data-index="5">
+            <span class="tcard-year">2022</span>
+            <h3>Перестройка рынка</h3>
+            <p>Быстрая адаптация инфраструктуры: новые рынки
+            и&nbsp;инструменты для&nbsp;клиентов.</p>
+          </article>
+          <article class="tcard" data-index="6">
+            <span class="tcard-year">Сегодня</span>
+            <h3>Крупнейший небанковский брокер России*</h3>
+            <p>Тысячи маршрутов пройдены. Ваш — впереди.</p>
+          </article>
+        </div>
+
+        <div class="timeline-dots" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. СИСТЕМА -->
+    <section class="scene scene--system" data-scene="system">
+      <div class="scene-content scene-content--left">
+        <p class="eyebrow eyebrow--gold reveal">05 · Система</p>
+        <h2 class="reveal">Маршрут строит не интуиция.<br />Его строит система.</h2>
+        <ul class="system-list">
+          <li class="reveal"><strong>Аналитика</strong><span>исследования по рынкам и эмитентам — каждый день</span></li>
+          <li class="reveal"><strong>Риск-менеджмент</strong><span>контроль на каждом шаге маршрута</span></li>
+          <li class="reveal"><strong>Технологии</strong><span>инфраструктура, выдерживающая любые объёмы</span></li>
+          <li class="reveal"><strong>Люди</strong><span>персональные советники, доступные напрямую</span></li>
+        </ul>
+        <p class="lead lead--accent reveal">Поэтому результат — не случайность. Он&nbsp;повторяем.</p>
+      </div>
+    </section>
+
+    <!-- 7. ПРОСТОТА -->
+    <section class="scene scene--simple" data-scene="simple">
+      <div class="scene-content scene-content--split">
+        <div>
+          <p class="eyebrow reveal">06 · Простота</p>
+          <h2 class="reveal">Вся сложность —<br />на нашей стороне.</h2>
+          <p class="lead reveal">Вам остаётся одно решение — первое.</p>
+        </div>
+        <div class="phone reveal" aria-hidden="true">
+          <div class="phone-screen">
+            <div class="phone-status"><i></i><i></i><i></i></div>
+            <p class="phone-label">БКС Мир инвестиций</p>
+            <p class="phone-title">Ваш маршрут готов</p>
+            <svg class="phone-chart" viewBox="0 0 200 60" fill="none" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M0 50 C 30 48, 45 30, 70 32 S 110 18, 135 20 S 175 6, 200 8" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/>
+              <defs><linearGradient id="g" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#38BDF8"/><stop offset="1" stop-color="#F5C24B"/>
+              </linearGradient></defs>
+            </svg>
+            <div class="phone-btn">Начать</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. CTA -->
+    <section class="scene scene--cta" id="open" data-scene="cta">
+      <div class="scene-content">
+        <h2 class="reveal">Тысячи маршрутов.<br />Один вход.</h2>
+        <a class="btn btn--gold reveal" href="#" id="cta-main">Открыть счёт</a>
+        <p class="cta-note reveal">Бесплатно · 5 минут онлайн · без визита в офис</p>
+        <ul class="trust reveal">
+          <li>30 лет на рынке</li>
+          <li>Лицензия Банка России</li>
+          <li>Крупнейший небанковский брокер*</li>
+        </ul>
+      </div>
+      <footer class="fineprint">
+        <p>*По объёму клиентских операций на Московской бирже. ООО «Компания БКС».
+        Лицензия ЦБ РФ №&nbsp;154-04434-100000 на&nbsp;осуществление брокерской деятельности.
+        Инвестиции связаны с&nbsp;риском. Не&nbsp;является индивидуальной инвестиционной рекомендацией.</p>
+      </footer>
+    </section>
+
+  </main>
+
+  <noscript>
+    <div class="noscript">БКС — навигатор по рынку. Откройте брокерский счёт за 5 минут на bcs.ru.
+    Для просмотра интерактивной версии включите JavaScript.</div>
+  </noscript>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
