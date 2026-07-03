@@ -122,7 +122,7 @@ if (experience) {
     .to(tgt, { x: 1.2, y: 0.5, z: -30, duration: 200 }, 280)
     .to(state, { trajReveal: 1, morph: 0.85, duration: 200 }, 280);
 
-  // 4. НАВИГАТОР — золотой маршрут, остальное гаснет
+  // 4. НАВИГАТОР — световой маршрут, остальное гаснет
   tl.to(rig, { x: 2.6, y: 1.8, z: -24, duration: 180 }, 480)
     .to(tgt, { x: -0.5, y: 0.6, z: -40, duration: 180 }, 480)
     .to(state, { routeDraw: 1, duration: 180 }, 480)
@@ -183,7 +183,7 @@ cards.forEach((card, i) => {
 
 if (!reducedMotion) {
   gsap.to('#cta-main', {
-    boxShadow: '0 0 64px rgba(245, 194, 75, 0.5)',
+    boxShadow: '0 0 72px rgba(206, 224, 255, 0.55)',
     repeat: -1,
     yoyo: true,
     duration: 1.8,

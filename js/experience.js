@@ -13,7 +13,7 @@ export const state = {
   morph: 0,       // хаос -> структура (частицы)
   trajReveal: 0,  // прорисовка траекторий-вариантов
   trajFade: 1,    // приглушение траекторий, когда появляется маршрут
-  routeDraw: 0,   // прорисовка золотого маршрута
+  routeDraw: 0,   // прорисовка светового маршрута БКС
   markers: 0,     // маяки таймлайна (0..1 -> 7 штук)
   rings: 0,       // орбиты системы экспертизы
   collapse: 0,    // финальное схлопывание в точку
@@ -88,11 +88,11 @@ const PARTICLES_FRAG = /* glsl */ `
     float d = length(gl_PointCoord - 0.5);
     float a = smoothstep(0.5, 0.05, d);
     if (a < 0.01) discard;
-    vec3 dim  = vec3(0.32, 0.40, 0.58);
-    vec3 cyan = vec3(0.22, 0.74, 0.98);
-    vec3 gold = vec3(0.96, 0.78, 0.35);
-    vec3 col = mix(dim, cyan, vMix);
-    col = mix(col, gold, uCollapse * 0.85);
+    vec3 dim   = vec3(0.30, 0.38, 0.58);
+    vec3 blue  = vec3(0.36, 0.53, 1.00);
+    vec3 light = vec3(0.94, 0.97, 1.00);
+    vec3 col = mix(dim, blue, vMix);
+    col = mix(col, light, uCollapse * 0.85);
     float alpha = a * (0.20 + vMix * 0.3) * vNear * (1.0 - uCollapse * 0.45);
     gl_FragColor = vec4(col, alpha);
   }
@@ -100,9 +100,12 @@ const PARTICLES_FRAG = /* glsl */ `
 
 const ROUTE_VERT = /* glsl */ `
   varying vec2 vUv;
+  varying float vNear;
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vNear = smoothstep(2.0, 7.5, -mv.z); // сегменты у объектива растворяются
+    gl_Position = projectionMatrix * mv;
   }
 `;
 
@@ -111,15 +114,16 @@ const ROUTE_FRAG = /* glsl */ `
   uniform float uTime;
   uniform float uAlpha;
   varying vec2 vUv;
+  varying float vNear;
   void main() {
     // прорисовка по длине тубуса (uv.x бежит вдоль маршрута)
     float edge = 1.0 - smoothstep(uDraw - 0.015, uDraw, vUv.x);
     if (edge <= 0.001 || vUv.x > uDraw) discard;
     float head = smoothstep(uDraw - 0.08, uDraw, vUv.x);   // светящаяся голова
     float pulse = 0.5 + 0.5 * sin(vUv.x * 80.0 - uTime * 2.4); // бегущий импульс
-    vec3 gold = vec3(1.0, 0.82, 0.42);
-    vec3 col = gold * (0.8 + head * 1.9 + pulse * 0.18);
-    gl_FragColor = vec4(col, uAlpha * edge);
+    vec3 light = vec3(0.93, 0.96, 1.0);
+    vec3 col = light * (0.8 + head * 1.9 + pulse * 0.18);
+    gl_FragColor = vec4(col, uAlpha * edge * vNear);
   }
 `;
 
@@ -136,12 +140,12 @@ export class Experience {
       antialias: false,
       powerPreference: 'high-performance',
     });
-    this.renderer.setClearColor(0x04060e, 1);
+    this.renderer.setClearColor(0x030814, 1);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.5 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x04060e, 0.016);
+    this.scene.fog = new THREE.FogExp2(0x030814, 0.016);
 
     this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 220);
     this.rig = new THREE.Group();           // GSAP двигает rig, камера живёт внутри
@@ -192,7 +196,7 @@ export class Experience {
       geo.setDrawRange(0, 0);
 
       const mat = new THREE.LineBasicMaterial({
-        color: dead ? 0xff5a5a : 0x3cc1ff,
+        color: dead ? 0x55627f : 0x4d7dff,
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
@@ -203,7 +207,7 @@ export class Experience {
         offset: Math.random() * 0.4,
         dead,
         seed: Math.random() * 10,
-        baseOpacity: dead ? 0.30 : rand(0.22, 0.46),
+        baseOpacity: dead ? 0.26 : rand(0.22, 0.46),
         total: sampled.length,
       };
       this.trajGroup.add(line);
@@ -213,7 +217,7 @@ export class Experience {
     this.scene.add(this.trajGroup);
   }
 
-  /* ---------- золотой маршрут ---------- */
+  /* ---------- маршрут БКС — луч белого света ---------- */
 
   _buildRoute() {
     this.routeCurve = new THREE.CatmullRomCurve3([
@@ -306,7 +310,7 @@ export class Experience {
     for (let i = 0; i < T.length; i++) {
       const mat = new THREE.SpriteMaterial({
         map: this.glow,
-        color: 0xf5c24b,
+        color: 0xdce8ff,
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -323,7 +327,7 @@ export class Experience {
     // финальная точка входа
     const endMat = new THREE.SpriteMaterial({
       map: this.glow,
-      color: 0xffdc8a,
+      color: 0xf4f8ff,
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -348,7 +352,7 @@ export class Experience {
       }
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const mat = new THREE.LineBasicMaterial({
-        color: i === 3 ? 0xf5c24b : 0x38bdf8,
+        color: i === 3 ? 0xf4f8ff : 0x4d7dff,
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
