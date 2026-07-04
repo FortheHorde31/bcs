@@ -29,7 +29,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { scroll-behavior: auto; overflow-x: clip; }
+html { scroll-behavior: auto; }
 
 body {
   background: var(--bg);
@@ -260,7 +260,7 @@ body.no-webgl {
 .scene--navigator { min-height: 180vh; }
 .scene--timeline  { min-height: 350vh; display: block; padding: 0; }
 .scene--system    { min-height: 180vh; }
-.scene--simple    { min-height: 140vh; }
+.scene--simple    { min-height: 140vh; overflow-x: clip; }
 .scene--cta       { min-height: 110vh; flex-direction: column; justify-content: center; }
 
 .scene-content {
