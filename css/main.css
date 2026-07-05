@@ -244,7 +244,9 @@ body.no-webgl {
 
 /* ---------- сцены ---------- */
 
-#journey { position: relative; z-index: var(--z-content); }
+/* clip (не hidden!) — обрезает вылезающие скримы/карточки,
+   не создаёт scroll-контейнер и не ломает sticky таймлайна */
+#journey { position: relative; z-index: var(--z-content); overflow-x: clip; }
 
 .scene {
   position: relative;
@@ -260,7 +262,7 @@ body.no-webgl {
 .scene--navigator { min-height: 180vh; }
 .scene--timeline  { min-height: 350vh; display: block; padding: 0; }
 .scene--system    { min-height: 180vh; }
-.scene--simple    { min-height: 140vh; overflow-x: clip; }
+.scene--simple    { min-height: 140vh; }
 .scene--cta       { min-height: 110vh; flex-direction: column; justify-content: center; }
 
 .scene-content {
