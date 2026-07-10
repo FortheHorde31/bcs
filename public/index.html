@@ -291,6 +291,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     [data-r="footgrid"]{grid-template-columns:1fr !important;gap:40px !important}
     [data-r="modal"]{padding:28px !important}
     [data-r="cookie"]{left:16px !important;right:16px !important;bottom:16px !important;max-width:none !important}
+    [data-r="mdlqr"]{display:none !important}
+    [data-r="mdlstores"]{display:flex !important}
   }
   @media (max-width:480px){
     [data-r="hero"] h1{font-size:44px !important}
@@ -849,7 +851,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div onclick="{{ stopModalClick }}" role="dialog" aria-modal="true" data-r="modal" style="position:relative;background:#F7FAFF;border-radius:28px;padding:34px 40px 32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 120px rgba(0,13,31,.45);animation:wfFade .3s ease">
         <button onclick="{{ closeModal }}" aria-label="Закрыть окно" style="position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,26,61,.25);background:none;cursor:pointer;font:400 16px/1 'Golos Text',sans-serif;color:#001A3D" style-hover="background:rgba(204,226,255,.4)">✕</button>
         <h2 style="margin:0;font:400 30px/1.15 'Prata',Georgia,serif;color:#001A3D">Успейте в текущий розыгрыш</h2>
-        <div style="margin-top:18px;border-top:1px solid rgba(0,26,61,.15);border-bottom:1px solid rgba(0,26,61,.15);padding:14px 0">
+        <div style="margin-top:18px;border-top:1px solid rgba(0,26,61,.15);border-bottom:1px solid rgba(0,26,61,.15);padding:14px 0;display:flex;gap:20px;align-items:center">
+          <div style="flex:1;min-width:0">
           <div style="font:600 11px 'Golos Text',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5A6B83">{{ cdCap }} · {{ cdPeriod }}</div>
           <div style="display:flex;gap:14px;align-items:baseline;margin-top:12px">
             <span style="font:400 30px 'Prata',Georgia,serif;font-variant-numeric:tabular-nums;color:#001A3D">{{ cdD }}<span style="font-size:13px;color:#5A6B83;margin-left:4px">дн</span></span>
@@ -858,8 +861,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <span style="font:400 30px 'Prata',Georgia,serif;font-variant-numeric:tabular-nums;color:#001A3D">{{ cdS }}<span style="font-size:13px;color:#5A6B83;margin-left:4px">сек</span></span>
           </div>
           <div style="margin-top:8px;font:400 14px 'Golos Text',sans-serif;color:#33465F">Приз недели — <b style="font-weight:500;color:#001A3D">{{ cdPrize }}</b></div>
+          </div>
+          <div data-r="mdlqr" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:7px">
+            <img src="assets/images/qr-app.svg" width="104" height="104" alt="QR-код для скачивания приложения БКС Мир инвестиций" style="display:block;border-radius:8px">
+            <span style="font:500 11px/1.3 'Golos Text',sans-serif;color:#5A6B83;text-align:center;max-width:112px">Наведите камеру, чтобы скачать приложение</span>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;margin-bottom:8px">
+        <div data-r="mdlstores" style="display:none;gap:8px;flex-wrap:wrap;margin-top:16px;margin-bottom:8px">
           <a href="https://s.bcs.ru/3YAAS" target="_blank" rel="noopener" style="display:inline-flex;border:1px solid rgba(0,26,61,.25);color:#001A3D;border-radius:999px;padding:7px 15px;font:500 12.5px 'Golos Text',sans-serif;text-decoration:none" style-hover="background:rgba(204,226,255,.4);text-decoration:none">App Store</a>
           <a href="https://s.bcs.ru/3YAAS" target="_blank" rel="noopener" style="display:inline-flex;border:1px solid rgba(0,26,61,.25);color:#001A3D;border-radius:999px;padding:7px 15px;font:500 12.5px 'Golos Text',sans-serif;text-decoration:none" style-hover="background:rgba(204,226,255,.4);text-decoration:none">Google Play</a>
           <a href="https://s.bcs.ru/3YAAS" target="_blank" rel="noopener" style="display:inline-flex;border:1px solid rgba(0,26,61,.25);color:#001A3D;border-radius:999px;padding:7px 15px;font:500 12.5px 'Golos Text',sans-serif;text-decoration:none" style-hover="background:rgba(204,226,255,.4);text-decoration:none">RuStore</a>
