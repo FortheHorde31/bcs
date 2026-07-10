@@ -289,7 +289,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     [data-r="faqgrid"]{grid-template-columns:1fr !important;gap:40px !important}
     [data-r="faqhead"]{position:static !important}
     [data-r="footgrid"]{grid-template-columns:1fr !important;gap:40px !important}
-    [data-r="modal"]{padding:28px !important}
+    [data-r="modalOverlay"]{align-items:stretch !important;justify-content:stretch !important;padding:0 !important}
+    [data-r="modal"]{box-sizing:border-box !important;width:100% !important;max-width:none !important;height:100vh !important;height:100dvh !important;max-height:none !important;border-radius:0 !important;padding:calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)) !important;box-shadow:none !important}
+    [data-r="modal"] > button[aria-label="Закрыть окно"]{top:calc(16px + env(safe-area-inset-top)) !important;right:16px !important}
     [data-r="cookie"]{left:16px !important;right:16px !important;bottom:16px !important;max-width:none !important}
     [data-r="mdlqr"]{display:none !important}
     [data-r="mdlstores"]{display:flex !important}
@@ -847,7 +849,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </footer>
 
   <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
-    <div data-screen-label="Модальное окно участия" onclick="{{ closeModal }}" style="position:fixed;inset:0;z-index:100;background:rgba(0,26,61,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;animation:wfIn .2s ease">
+    <div data-r="modalOverlay" data-screen-label="Модальное окно участия" onclick="{{ closeModal }}" style="position:fixed;inset:0;z-index:100;background:rgba(0,26,61,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;animation:wfIn .2s ease">
       <div onclick="{{ stopModalClick }}" role="dialog" aria-modal="true" data-r="modal" style="position:relative;background:#F7FAFF;border-radius:28px;padding:34px 40px 32px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 40px 120px rgba(0,13,31,.45);animation:wfFade .3s ease">
         <button onclick="{{ closeModal }}" aria-label="Закрыть окно" style="position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(0,26,61,.25);background:none;cursor:pointer;font:400 16px/1 'Golos Text',sans-serif;color:#001A3D" style-hover="background:rgba(204,226,255,.4)">✕</button>
         <h2 style="margin:0;font:400 30px/1.15 'Prata',Georgia,serif;color:#001A3D">Успейте в текущий розыгрыш</h2>
