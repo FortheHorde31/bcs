@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>БКС — Шах и мат рынку</title>
+<meta name="description" content="Рынок играет чёрными. Сыграй партию против рынка с гроссмейстером БКС за спиной — и поставь мат за 7 ходов. Открой брокерский счёт за 5 минут.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="logo_bcs.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c12;
+    --bg-2:#10131c;
+    --panel:rgba(13,16,24,.78);
+    --line:rgba(212,175,55,.22);
+    --line-soft:rgba(255,255,255,.08);
+    --gold:#d4af37;
+    --gold-2:#e8c964;
+    --red:#e35d5d;
+    --green:#46c98f;
+    --text:#ece9e0;
+    --muted:#9aa0ab;
+    --z-vignette:5;
+    --z-hud:20;
+    --z-cards:25;
+    --z-content:30;
+    --z-header:50;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  button{font-family:inherit}
+  ::selection{background:rgba(212,175,55,.35)}
+
+  /* ---------- canvas & vignette ---------- */
+  #stage{position:fixed;inset:0;z-index:0;display:block;width:100%;height:100%}
+  #vignette{
+    position:fixed;inset:0;z-index:var(--z-vignette);pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, transparent 55%, rgba(4,5,9,.55) 100%);
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:var(--z-header);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 28px;
+    background:linear-gradient(to bottom, rgba(6,8,13,.85), transparent);
+  }
+  .logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text)}
+  .logo-mark{width:38px;height:38px;flex:none;display:block;object-fit:contain}
+  .logo-text{display:flex;flex-direction:column;line-height:1.25}
+  .logo-text b{font-size:14px;font-weight:600;letter-spacing:.06em}
+  .logo-text span{font-size:10px;color:var(--muted);letter-spacing:.22em;text-transform:uppercase}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 26px;border-radius:8px;border:none;cursor:pointer;
+    font-size:15px;font-weight:600;letter-spacing:.01em;text-decoration:none;
+    transition:background-color .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .btn:focus-visible{outline:2px solid var(--gold-2);outline-offset:3px}
+  .btn-gold{background:var(--gold);color:#0a0c12}
+  .btn-gold:hover{background:var(--gold-2);box-shadow:0 6px 28px rgba(212,175,55,.35)}
+  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line-soft)}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold-2)}
+  header .btn{padding:10px 20px;font-size:14px}
+
+  /* ---------- HUD (clock, ticker, notation, mate) ---------- */
+  #hud{position:fixed;inset:0;z-index:var(--z-hud);pointer-events:none}
+
+  #clock{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:stretch;gap:1px;
+    background:var(--panel);backdrop-filter:blur(10px);
+    border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;
+  }
+  .clk{
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:10px 22px;min-width:150px;
+    background:rgba(255,255,255,.02);
+    transition:background-color .3s ease;
+  }
+  .clk .who{font-size:10px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+  .clk .time{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+  .clk.active{background:rgba(212,175,55,.12)}
+  .clk.active .time{color:var(--gold-2)}
+  .clk.active .who{color:var(--gold)}
+  .clk.flag .time{color:var(--red)}
+  #clock-mid{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:10px 14px;background:rgba(255,255,255,.02);min-width:84px;
+  }
+  #move-no{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:.1em;white-space:nowrap}
+
+  #notation{
+    position:absolute;left:28px;bottom:56px;
+    background:var(--panel);backdrop-filter:blur(10px);
+    border:1px solid var(--line-soft);border-radius:10px;
+    padding:12px 16px;max-width:240px;
+  }
+  #notation h4{font-size:10px;letter-spacing:.22em;color:var(--muted);font-weight:500;margin-bottom:6px}
+  #notation .sans{font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.8;color:var(--text)}
+  #notation .sans span{opacity:0;transition:opacity .4s ease;margin-right:8px;display:inline-block}
+  #notation .sans span.on{opacity:1}
+  #notation .sans span.mate{color:var(--gold-2);font-weight:600}
+
+  #ticker{
+    position:absolute;left:0;right:0;bottom:0;height:30px;overflow:hidden;
+    background:rgba(6,8,13,.85);border-top:1px solid var(--line-soft);
+    display:flex;align-items:center;
+  }
+  .ticker-track{
+    display:inline-block;white-space:nowrap;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);
+    animation:tick 45s linear infinite;will-change:transform;
+  }
+  .ticker-track .up{color:var(--green)}
+  .ticker-track .dn{color:var(--red)}
+  @keyframes tick{to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion: reduce){ .ticker-track{animation:none} }
+
+  #mate-overlay{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;opacity:0;
+  }
+  #mate-overlay .stamp{
+    font-size:clamp(2.6rem,9vw,7rem);font-weight:700;letter-spacing:.12em;
+    color:var(--gold);text-transform:uppercase;line-height:1.05;
+    text-shadow:0 3px 16px rgba(4,5,9,.85), 0 0 60px rgba(212,175,55,.45);
+  }
+  #mate-overlay .sub{
+    margin-top:18px;font-size:clamp(.95rem,2vw,1.2rem);color:var(--text);
+    background:rgba(6,8,13,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    padding:12px 24px;border-radius:12px;border:1px solid rgba(255,255,255,.06);
+  }
+
+  /* ---------- hero overlay ---------- */
+  #hero{
+    position:fixed;inset:0;z-index:var(--z-cards);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:0 20px;pointer-events:none;
+  }
+  #hero .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.32em;
+    color:var(--gold);text-transform:uppercase;margin-bottom:18px;
+  }
+  #hero h1{
+    font-size:clamp(2.4rem,6.4vw,4.6rem);font-weight:700;line-height:1.08;
+    letter-spacing:-.015em;max-width:13ch;
+    text-shadow:0 2px 30px rgba(4,5,9,.9), 0 0 80px rgba(4,5,9,.7);
+  }
+  #hero .sub{text-shadow:0 1px 16px rgba(4,5,9,.95)}
+  #hero .sub{
+    margin-top:20px;max-width:600px;color:var(--text);
+    font-size:clamp(1rem,1.6vw,1.15rem);font-weight:400;
+    background:rgba(6,8,13,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    padding:14px 22px;border-radius:12px;border:1px solid rgba(255,255,255,.06);
+  }
+  #hero .sub b{color:var(--gold-2);font-weight:600}
+  #hero .actions{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;justify-content:center;pointer-events:auto}
+  #hero .scroll-hint{
+    position:absolute;bottom:52px;left:50%;transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;
+  }
+  .chev{width:18px;height:18px;animation:dip 1.6s ease-in-out infinite}
+  @keyframes dip{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(6px);opacity:1}}
+  @media (prefers-reduced-motion: reduce){ .chev{animation:none} }
+
+  /* ---------- move cards ---------- */
+  .mcard{
+    position:fixed;top:50%;z-index:var(--z-cards);
+    width:min(400px,calc(100vw - 32px));
+    background:var(--panel);backdrop-filter:blur(14px);
+    border:1px solid var(--line-soft);border-radius:14px;
+    padding:24px 26px;opacity:0;pointer-events:none;
+    transform:translateY(40px);
+    box-shadow:0 24px 60px rgba(0,0,0,.45);
+  }
+  .mcard[data-pos="right"]{right:48px}
+  .mcard[data-pos="left"]{left:48px}
+  .mcard .tag{
+    display:flex;align-items:center;gap:10px;margin-bottom:12px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  }
+  .mcard .tag .side-w{color:var(--gold)}
+  .mcard .tag .side-b{color:var(--red)}
+  .mcard .tag .san{color:var(--muted);margin-left:auto;letter-spacing:.06em}
+  .mcard h3{font-size:1.45rem;font-weight:600;line-height:1.2;margin-bottom:10px}
+  .mcard p{color:var(--muted);font-size:.95rem}
+  .mcard .tip{
+    margin-top:16px;padding:12px 14px;border-left:2px solid var(--gold);
+    background:rgba(212,175,55,.07);border-radius:0 8px 8px 0;
+  }
+  .mcard .tip .tip-label{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;
+    color:var(--gold);text-transform:uppercase;display:block;margin-bottom:4px;
+  }
+  .mcard .tip .tip-text{font-size:.9rem;color:var(--text)}
+  .mcard[data-side="b"]{border-color:rgba(227,93,93,.25)}
+
+  /* ---------- scroll spacer ---------- */
+  #game{height:1180vh;position:relative}
+
+  /* ---------- after-game content ---------- */
+  #after{position:relative;z-index:var(--z-content);background:var(--bg)}
+  #after::before{
+    content:"";position:absolute;top:-140px;left:0;right:0;height:140px;
+    background:linear-gradient(to bottom, transparent, var(--bg));pointer-events:none;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  section.block{padding:110px 0}
+
+  .finale h2{
+    font-size:clamp(2rem,5vw,3.4rem);font-weight:700;line-height:1.1;letter-spacing:-.01em;
+    max-width:18ch;
+  }
+  .finale .lead{margin-top:22px;max-width:640px;color:var(--muted);font-size:1.1rem;font-weight:300}
+  .finale .lead b{color:var(--text);font-weight:600}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:56px;
+    background:var(--line-soft);border:1px solid var(--line-soft);border-radius:14px;overflow:hidden;
+  }
+  .stat{background:var(--bg-2);padding:28px 24px}
+  .stat .num{font-size:2rem;font-weight:700;color:var(--gold-2);font-variant-numeric:tabular-nums}
+  .stat .lbl{margin-top:4px;color:var(--muted);font-size:.9rem}
+
+  .benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .bcard{
+    background:var(--bg-2);border:1px solid var(--line-soft);border-radius:14px;
+    padding:30px 28px;transition:border-color .25s ease, box-shadow .25s ease;
+  }
+  .bcard:hover{border-color:var(--line);box-shadow:0 16px 48px rgba(0,0,0,.4)}
+  .bcard .icon{
+    width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    background:rgba(212,175,55,.1);color:var(--gold);margin-bottom:18px;
+  }
+  .bcard .icon svg{width:24px;height:24px}
+  .bcard h3{font-size:1.15rem;font-weight:600;margin-bottom:8px}
+  .bcard p{color:var(--muted);font-size:.92rem}
+
+  .cta-final{text-align:center}
+  .cta-final .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.32em;
+    color:var(--gold);text-transform:uppercase;margin-bottom:16px;
+  }
+  .cta-final h2{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;letter-spacing:-.01em}
+  .cta-final .actions{display:flex;gap:14px;justify-content:center;margin-top:34px;flex-wrap:wrap}
+  .cta-final .btn{padding:16px 36px;font-size:16px}
+  .cta-final .note{margin-top:16px;color:var(--muted);font-size:.85rem}
+
+  footer{
+    border-top:1px solid var(--line-soft);padding:36px 0 48px;
+    color:#6b7280;font-size:.78rem;line-height:1.7;
+  }
+
+  /* ---------- DOBS modal ---------- */
+  #dobs-modal{
+    position:fixed;inset:0;z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  #dobs-modal[hidden]{display:none}
+  .dobs-backdrop{
+    position:absolute;inset:0;
+    background:rgba(4,5,9,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+  .dobs-dialog{
+    position:relative;width:min(560px,100%);max-height:min(88vh,860px);
+    background:#0e1118;border-radius:16px;overflow-y:auto;overscroll-behavior:contain;
+    border:1px solid var(--line);
+    box-shadow:0 40px 120px rgba(0,0,0,.6), 0 0 80px rgba(212,175,55,.08);
+    animation:dobs-in .25s ease;
+  }
+  @keyframes dobs-in{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){ .dobs-dialog{animation:none} }
+  .dobs-head{
+    display:flex;align-items:center;gap:14px;
+    padding:18px 22px;border-bottom:1px solid var(--line-soft);
+    position:sticky;top:0;background:rgba(14,17,24,.96);backdrop-filter:blur(8px);z-index:2;
+  }
+  .dobs-head .mark{width:36px;height:36px;flex:none;display:block;object-fit:contain}
+  .dobs-head .titles{line-height:1.3;min-width:0}
+  .dobs-head .ttl{font-size:15px;font-weight:600;color:var(--text)}
+  .dobs-head .sbt{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase}
+  .dobs-close{
+    margin-left:auto;display:flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;flex:none;
+    background:rgba(255,255,255,.08);color:var(--text);
+    transition:background-color .2s ease;
+  }
+  .dobs-close:hover{background:rgba(255,255,255,.18)}
+  .dobs-close:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .dobs-close svg{width:16px;height:16px}
+  #dobs-widget-frame-container{min-height:480px;position:relative}
+  #dobs-widget-frame{
+    width:100%;height:600px;border:none;overflow:hidden;display:block;
+    /* премиальная тема: инвертируем белую форму в тёмную, синий → янтарный */
+    filter:invert(.94) saturate(1.2) contrast(.94);
+  }
+  .dobs-loader{
+    position:absolute;inset:0;display:flex;flex-direction:column;gap:14px;
+    align-items:center;justify-content:center;color:var(--muted);
+    font-size:.9rem;background:#0e1118;
+  }
+  .dobs-loader .spin{
+    width:34px;height:34px;border-radius:50%;
+    border:3px solid rgba(255,255,255,.12);border-top-color:var(--gold);
+    animation:dobs-spin .8s linear infinite;
+  }
+  @keyframes dobs-spin{to{transform:rotate(360deg)}}
+  @media (max-width:720px){
+    #dobs-modal{padding:0;align-items:flex-end}
+    .dobs-dialog{width:100%;max-height:94vh;border-radius:16px 16px 0 0}
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .benefits{grid-template-columns:1fr}
+  }
+  @media (max-width:720px){
+    header{padding:12px 16px}
+    .logo-text span{display:none}
+    #notation,#ticker{display:none}
+    #clock{top:auto;bottom:14px}
+    .clk{min-width:108px;padding:8px 12px}
+    .clk .time{font-size:18px}
+    #clock-mid{min-width:64px;padding:8px 8px}
+    .mcard[data-pos="right"],.mcard[data-pos="left"]{
+      left:16px;right:16px;top:auto;bottom:96px;width:auto;padding:18px 20px;
+    }
+    .mcard h3{font-size:1.2rem}
+    /* hero: avoid overlap on short mobile viewports */
+    #hero{justify-content:center;padding:40px 18px 110px}
+    #hero h1{margin-top:6px}
+    #hero .sub{margin-top:16px}
+    #hero .actions{margin-top:26px;width:100%;max-width:340px;flex-direction:column}
+    #hero .actions .btn{width:100%}
+    #hero .actions #btn-start{display:none}
+    #hero .scroll-hint{position:static;transform:none;bottom:auto;margin-top:26px}
+    section.block{padding:70px 0}
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================= 3D STAGE ======================= -->
+<canvas id="stage" aria-hidden="true"></canvas>
+<div id="vignette"></div>
+
+<!-- ======================= HEADER ======================= -->
+<header>
+  <a class="logo" href="#" aria-label="БКС — на главную">
+    <img class="logo-mark" src="logo_bcs.svg" alt="Логотип БКС" width="38" height="38">
+    <span class="logo-text"><b>БКС Мир инвестиций</b><span>Шах и мат рынку</span></span>
+  </a>
+  <a class="btn btn-gold js-open-account" href="https://bcs.ru" target="_blank" rel="noopener">Открыть счёт</a>
+</header>
+
+<!-- ======================= HUD ======================= -->
+<div id="hud">
+  <div id="clock" role="timer" aria-label="Шахматные часы партии">
+    <div class="clk" id="clk-w">
+      <span class="who">Ты · Белые</span>
+      <span class="time" id="time-w">05:00</span>
+    </div>
+    <div id="clock-mid"><span id="move-no">ДЕБЮТ</span></div>
+    <div class="clk" id="clk-b">
+      <span class="who">Рынок · Чёрные</span>
+      <span class="time" id="time-b">05:00</span>
+    </div>
+  </div>
+
+  <div id="notation">
+    <h4>ПАРТИЯ</h4>
+    <div class="sans" id="sans"></div>
+  </div>
+
+  <div id="ticker"><div class="ticker-track" id="ticker-track">
+    IMOEX <span class="up">&#9650; +1,2%</span> &nbsp;·&nbsp; RTS <span class="up">&#9650; +0,8%</span> &nbsp;·&nbsp; BRENT <span class="dn">&#9660; &minus;0,6%</span> &nbsp;·&nbsp; USD/RUB 84,10 &nbsp;·&nbsp; SBER <span class="up">&#9650; +0,9%</span> &nbsp;·&nbsp; GAZP <span class="dn">&#9660; &minus;0,4%</span> &nbsp;·&nbsp; LKOH <span class="up">&#9650; +0,7%</span> &nbsp;·&nbsp; OZON <span class="up">&#9650; +2,1%</span> &nbsp;·&nbsp; NVTK <span class="dn">&#9660; &minus;1,1%</span> &nbsp;·&nbsp; GOLD <span class="up">&#9650; +0,3%</span> &nbsp;·&nbsp;
+  </div></div>
+
+  <div id="mate-overlay">
+    <div class="stamp">Шах и мат</div>
+    <div class="sub">Партия за 7 ходов. Рынок остановил часы.</div>
+  </div>
+</div>
+
+<!-- ======================= HERO ======================= -->
+<div id="hero">
+  <div class="eyebrow">БКС · Брокерский счёт</div>
+  <h1>Рынок играет чёрными</h1>
+  <p class="sub">Он быстрый, умный и непредсказуемый. В одиночку <b>8 из 10 игроков</b> проигрывают ему партию. Но с гроссмейстером за спиной мат ставишь <b>ты</b>.</p>
+  <div class="actions">
+    <a class="btn btn-gold js-open-account" href="https://bcs.ru" target="_blank" rel="noopener">Открыть счёт</a>
+    <button class="btn btn-ghost" id="btn-start" type="button">Сделать первый ход</button>
+  </div>
+  <div class="scroll-hint">
+    <span>Листай, чтобы сделать ход</span>
+    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+</div>
+
+<!-- ======================= MOVE CARDS ======================= -->
+<div class="mcard" id="card-1" data-pos="right" data-side="w">
+  <div class="tag"><span class="side-w">Ход 1 · Ты</span><span class="san">e2–e4</span></div>
+  <h3>Дебют: выход на рынок</h3>
+  <p>Ты открываешь счёт и делаешь первый взнос. Пешка занимает центр — капитал начинает работать.</p>
+  <div class="tip"><span class="tip-label">Совет гроссмейстера БКС</span><span class="tip-text">Начать проще, чем кажется: счёт открывается онлайн за 5 минут.</span></div>
+</div>
+
+<div class="mcard" id="card-2" data-pos="left" data-side="b">
+  <div class="tag"><span class="side-b">Ход 2 · Рынок</span><span class="san">e7–e5</span></div>
+  <h3>Рынок принимает вызов</h3>
+  <p>На каждое твоё движение у рынка готов ответ: новости, ставки, отчёты, геополитика. Волатильность зеркалит твой ход.</p>
+</div>
+
+<div class="mcard" id="card-3" data-pos="right" data-side="w">
+  <div class="tag"><span class="side-w">Ход 3 · Ты</span><span class="san">Фd1–h5</span></div>
+  <h3>Сильная фигура в игре</h3>
+  <p>По сигналу аналитиков ты выводишь ферзя — основной капитал — на активную позицию. Цель уже выбрана.</p>
+  <div class="tip"><span class="tip-label">Совет гроссмейстера БКС</span><span class="tip-text">Аналитики БКС дают сотни инвестидей в год. Ферзь не ходит наугад.</span></div>
+</div>
+
+<div class="mcard" id="card-4" data-pos="left" data-side="b">
+  <div class="tag"><span class="side-b">Ход 4 · Рынок</span><span class="san">Кb8–c6</span></div>
+  <h3>Коррекция</h3>
+  <p>Рынок стягивает защиту и провоцирует тебя на размен. Индексы краснеют. Без плана здесь начинается паника — и убыточные сделки.</p>
+</div>
+
+<div class="mcard" id="card-5" data-pos="right" data-side="w">
+  <div class="tag"><span class="side-w">Ход 5 · Ты</span><span class="san">Сf1–c4</span></div>
+  <h3>Диверсификация</h3>
+  <p>Вторая фигура нацелена на то же слабое поле. Акции, облигации, валюта — давление на рынок с разных сторон.</p>
+  <div class="tip"><span class="tip-label">Совет гроссмейстера БКС</span><span class="tip-text">Правило мастера: никогда не атакуй одной фигурой.</span></div>
+</div>
+
+<div class="mcard" id="card-6" data-pos="left" data-side="b">
+  <div class="tag"><span class="side-b">Ход 6 · Рынок</span><span class="san">Кg8–f6</span></div>
+  <h3>Атака на твой капитал</h3>
+  <p>Конь нападает на ферзя. Минус 15% за неделю — рынок хочет, чтобы ты испугался и вышел. Толпа уже продаёт.</p>
+  <div class="tip"><span class="tip-label">БКС на связи</span><span class="tip-text">Спокойно. Это ошибка рынка: у тебя мат в один ход.</span></div>
+</div>
+
+<div class="mcard" id="card-7" data-pos="right" data-side="w">
+  <div class="tag"><span class="side-w">Ход 7 · Ты</span><span class="san">Ф:f7#</span></div>
+  <h3>Шах и мат</h3>
+  <p>Ферзь забирает f7. Комбинация, выстроенная с советником, закрывается прибылью. Рынок останавливает часы.</p>
+</div>
+
+<!-- ======================= SCROLL TRACK ======================= -->
+<div id="game" aria-hidden="true"></div>
+
+<!-- ======================= AFTER GAME ======================= -->
+<main id="after">
+  <section class="block finale">
+    <div class="wrap">
+      <h2>Эта партия может быть твоей</h2>
+      <p class="lead">Каждый день рынок делает ход против тебя — даже когда ты не за доской. <b>БКС 30 лет играет на этом поле</b> и знает его комбинации. Открой счёт — и играй белыми.</p>
+      <div class="stats">
+        <div class="stat"><div class="num">30 лет</div><div class="lbl">на фондовом рынке России</div></div>
+        <div class="stat"><div class="num">500+</div><div class="lbl">инвестиционных идей в год</div></div>
+        <div class="stat"><div class="num">5 минут</div><div class="lbl">на открытие счёта онлайн</div></div>
+        <div class="stat"><div class="num">24/7</div><div class="lbl">аналитика и поддержка в приложении</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap benefits">
+      <div class="bcard">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 18l2-10 5 4 2-7 2 7 5-4 2 10H3z"/><path d="M5 21h14"/></svg></div>
+        <h3>Гроссмейстер за спиной</h3>
+        <p>Персональный советник и готовые стратегии: ты делаешь ход — мы просчитываем партию на десять ходов вперёд.</p>
+      </div>
+      <div class="bcard">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 3 8-8"/><path d="M15 6h6v6"/></svg></div>
+        <h3>Аналитика, а не интуиция</h3>
+        <p>Одна из сильнейших аналитических команд страны: сотни инвестидей в год по акциям, облигациям и валюте.</p>
+      </div>
+      <div class="bcard">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.4-8 10-4.5-1.6-8-5-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3>Надёжность, проверенная временем</h3>
+        <p>30 лет на рынке, лицензии Банка России и сотни тысяч клиентов, которые уже играют белыми.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block cta-final">
+    <div class="wrap">
+      <div class="eyebrow">Часы уже идут</div>
+      <h2>Твой ход</h2>
+      <div class="actions">
+        <a class="btn btn-gold js-open-account" href="https://bcs.ru" target="_blank" rel="noopener">Открыть счёт в БКС</a>
+        <button class="btn btn-ghost" id="btn-replay" type="button">Сыграть партию ещё раз</button>
+      </div>
+      <p class="note">Бесплатно. Онлайн. Нужен только паспорт.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      Демонстрационный концепт лендинга. Не является официальным сайтом или офертой ООО «Компания БКС». Не является индивидуальной инвестиционной рекомендацией. Инвестиции связаны с риском: стоимость активов может как расти, так и снижаться, доходность в прошлом не определяет доходность в будущем.
+    </div>
+  </footer>
+</main>
+
+<!-- ======================= DOBS MODAL ======================= -->
+<div id="dobs-modal" hidden>
+  <div class="dobs-backdrop" data-dobs-close></div>
+  <div class="dobs-dialog" role="dialog" aria-modal="true" aria-label="Открытие счёта в БКС">
+    <div class="dobs-head">
+      <img class="mark" src="logo_bcs.svg" alt="" width="36" height="36">
+      <div class="titles">
+        <div class="sbt">Твой ход</div>
+        <div class="ttl">Открытие брокерского счёта</div>
+      </div>
+      <button class="dobs-close" type="button" data-dobs-close aria-label="Закрыть окно">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="dobs-widget-frame-container">
+      <div class="dobs-loader" id="dobs-loader"><div class="spin"></div><span>Загружаем форму заявки…</span></div>
+      <iframe
+        id="dobs-widget-frame"
+        title="Заявка на открытие счёта БКС"
+        data-src="https://my.broker.ru/dobs/partner-widget?guid=EC85ADD1-5431-4BEC-9AB0-4F14CEFABCD6&amp;display=widgetBorderless"
+        scrolling="no"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var modal  = document.getElementById('dobs-modal');
+  var frame  = document.getElementById('dobs-widget-frame');
+  var loader = document.getElementById('dobs-loader');
+  var lastFocus = null;
+
+  function openModal(){
+    if(!frame.src){
+      frame.src = frame.dataset.src;
+      frame.addEventListener('load', function(){ loader.style.display='none'; }, {once:true});
+    }
+    lastFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    modal.querySelector('.dobs-close').focus();
+  }
+  function closeModal(){
+    modal.hidden = true;
+    document.body.style.overflow = '';
+    if(lastFocus) lastFocus.focus();
+  }
+
+  document.querySelectorAll('.js-open-account').forEach(function(a){
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      openModal();
+    });
+  });
+  modal.querySelectorAll('[data-dobs-close]').forEach(function(el){
+    el.addEventListener('click', closeModal);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && !modal.hidden) closeModal();
+  });
+
+  /* DOBS widget protocol: auto-height + redirect on finish */
+  window.addEventListener('message', function(message){
+    try{
+      var msg = JSON.parse(message.data);
+      if(msg.type === 'DOBS_RESIZED' && msg.payload && msg.payload.height){
+        frame.style.height = msg.payload.height + 'px';
+        return;
+      }
+      if(msg.type === 'DOBS_REDIRECT' && msg.payload && msg.payload.url){
+        document.location = msg.payload.url;
+      }
+    }catch(e){ /* messages from other sources are not JSON — ignore */ }
+  });
+})();
+</script>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+/* ============================================================
+   helpers
+============================================================ */
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp  = (a,b,t)=>a+(b-a)*t;
+const easeIO= t=>t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const smooth=(x,a,b)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const FILES = {a:0,b:1,c:2,d:3,e:4,f:5,g:6,h:7};
+const sq = s => ({ x: FILES[s[0]] - 3.5, z: 4.5 - (+s[1]) });
+
+/* ============================================================
+   scene
+============================================================ */
+const canvas = document.getElementById('stage');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+} catch(e) {
+  canvas.style.display='none';
+  console.warn('WebGL unavailable', e);
+}
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0c12);
+scene.fog = new THREE.Fog(0x0a0c12, 13, 30);
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth/innerHeight, .1, 100);
+
+if (renderer){
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
+}
+
+/* lights */
+scene.add(new THREE.HemisphereLight(0x3a4256, 0x0a0c12, .8));
+const sun = new THREE.DirectionalLight(0xfff2d8, 1.7);
+sun.position.set(6,11,5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-7; sun.shadow.camera.right=7;
+sun.shadow.camera.top=7;  sun.shadow.camera.bottom=-7;
+sun.shadow.camera.far=30;
+sun.shadow.bias=-0.0008;
+scene.add(sun);
+const goldLight = new THREE.PointLight(0xd4af37, 28, 22); goldLight.position.set(-6,3.2,-2); scene.add(goldLight);
+const blueLight = new THREE.PointLight(0x4a6cff, 22, 22); blueLight.position.set(5.5,2.4,-6); scene.add(blueLight);
+
+/* board */
+const matLightSq = new THREE.MeshStandardMaterial({color:0xcfc3a5, roughness:.45, metalness:.08});
+const matDarkSq  = new THREE.MeshStandardMaterial({color:0x22232e, roughness:.38, metalness:.25});
+const sqGeo = new THREE.BoxGeometry(1,.12,1);
+for(let f=0; f<8; f++) for(let r=0; r<8; r++){
+  const m = new THREE.Mesh(sqGeo, (f+r)%2 ? matLightSq : matDarkSq);
+  m.position.set(f-3.5, -.06, 3.5-r);
+  m.receiveShadow = true;
+  scene.add(m);
+}
+const goldTrim = new THREE.Mesh(
+  new THREE.BoxGeometry(8.5,.1,8.5),
+  new THREE.MeshStandardMaterial({color:0xc9a14a, roughness:.25, metalness:.9})
+);
+goldTrim.position.y=-.08; goldTrim.receiveShadow=true; scene.add(goldTrim);
+const plinth = new THREE.Mesh(
+  new THREE.BoxGeometry(9.6,.32,9.6),
+  new THREE.MeshStandardMaterial({color:0x11141c, roughness:.5, metalness:.4})
+);
+plinth.position.y=-.27; plinth.receiveShadow=true; scene.add(plinth);
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(40,48),
+  new THREE.MeshStandardMaterial({color:0x0a0c12, roughness:.95, metalness:0})
+);
+ground.rotation.x=-Math.PI/2; ground.position.y=-.43; ground.receiveShadow=true; scene.add(ground);
+
+/* square highlights */
+function makeHighlight(color){
+  const m = new THREE.Mesh(
+    new THREE.PlaneGeometry(.96,.96),
+    new THREE.MeshBasicMaterial({color, transparent:true, opacity:0, depthWrite:false})
+  );
+  m.rotation.x=-Math.PI/2; m.position.y=.005; scene.add(m); return m;
+}
+const hFrom = makeHighlight(0xd4af37);
+const hTo   = makeHighlight(0xd4af37);
+
+/* ============================================================
+   pieces (procedural)
+============================================================ */
+const matW = new THREE.MeshStandardMaterial({color:0xe7dac2, roughness:.35, metalness:.22});
+const matB = new THREE.MeshStandardMaterial({color:0x15151d, roughness:.3,  metalness:.5});
+
+function latheMesh(pts, mat){
+  const geo = new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])), 40);
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = true;
+  return m;
+}
+function ball(r, y, mat, sx=1, sy=1){
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 18), mat);
+  m.position.y=y; m.scale.set(sx,sy,sx); m.castShadow=true; return m;
+}
+
+function buildPiece(type, mat){
+  const g = new THREE.Group();
+  if(type==='pawn'){
+    g.add(latheMesh([[0,0],[.30,0],[.30,.05],[.26,.08],[.16,.13],[.12,.30],[.17,.34],[.11,.38],[.12,.41],[0,.41]], mat));
+    g.add(ball(.15,.52,mat));
+  }
+  else if(type==='rook'){
+    g.add(latheMesh([[0,0],[.32,0],[.32,.06],[.27,.10],[.20,.14],[.18,.52],[.27,.55],[.27,.72],[.17,.72],[.17,.65],[0,.65]], mat));
+  }
+  else if(type==='bishop'){
+    g.add(latheMesh([[0,0],[.31,0],[.31,.06],[.26,.10],[.17,.14],[.13,.48],[.20,.52],[.13,.56],[.17,.62],[.17,.66],[.12,.74],[.05,.82],[0,.84]], mat));
+    g.add(ball(.055,.88,mat));
+  }
+  else if(type==='knight'){
+    g.add(latheMesh([[0,0],[.31,0],[.31,.06],[.26,.10],[.18,.14],[.16,.28],[.23,.33],[0,.33]], mat));
+    const head = new THREE.Mesh(new THREE.BoxGeometry(.24,.5,.32), mat);
+    head.position.set(0,.56,.02); head.rotation.x=-.28; head.castShadow=true; g.add(head);
+    const muzzle = new THREE.Mesh(new THREE.BoxGeometry(.2,.18,.3), mat);
+    muzzle.position.set(0,.66,.24); muzzle.rotation.x=-.18; muzzle.castShadow=true; g.add(muzzle);
+    const earGeo = new THREE.ConeGeometry(.05,.15,10);
+    [-0.07,0.07].forEach(x=>{
+      const ear = new THREE.Mesh(earGeo, mat);
+      ear.position.set(x,.84,-.06); ear.castShadow=true; g.add(ear);
+    });
+  }
+  else if(type==='queen'){
+    g.add(latheMesh([[0,0],[.34,0],[.34,.06],[.28,.10],[.19,.15],[.13,.55],[.22,.62],[.16,.66],[.20,.72],[.20,.76],[.13,.86],[.17,.94],[.08,.98],[0,1.0]], mat));
+    g.add(ball(.065,1.04,mat));
+  }
+  else if(type==='king'){
+    g.add(latheMesh([[0,0],[.35,0],[.35,.06],[.29,.10],[.20,.15],[.14,.62],[.23,.70],[.17,.74],[.21,.80],[.21,.84],[.14,.94],[.19,1.02],[.10,1.06],[0,1.08]], mat));
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(.05,.2,.05), mat);
+    c1.position.y=1.18; c1.castShadow=true; g.add(c1);
+    const c2 = new THREE.Mesh(new THREE.BoxGeometry(.15,.05,.05), mat);
+    c2.position.y=1.2; c2.castShadow=true; g.add(c2);
+  }
+  return g;
+}
+
+/* roster */
+const pieces = {};
+function addPiece(id, type, color, square){
+  const g = buildPiece(type, color==='w'?matW:matB);
+  const p = sq(square);
+  g.position.set(p.x,0,p.z);
+  if(color==='b') g.rotation.y = Math.PI;
+  scene.add(g);
+  pieces[id] = {group:g, start:square, type, color, baseRotY: color==='b'?Math.PI:0};
+}
+const BACK = {a:'rook', b:'knight', c:'bishop', d:'queen', e:'king', f:'bishop', g:'knight', h:'rook'};
+const LETTER = {rook:'r', knight:'n', bishop:'b', queen:'q', king:'k'};
+for(const f of 'abcdefgh'){
+  addPiece('wp_'+f,'pawn','w',f+'2');
+  addPiece('bp_'+f,'pawn','b',f+'7');
+  const t = BACK[f];
+  const wid = t==='queen'?'wq':t==='king'?'wk':'w'+LETTER[t]+'_'+f;
+  const bid = t==='queen'?'bq':t==='king'?'bk':'b'+LETTER[t]+'_'+f;
+  addPiece(wid,t,'w',f+'1');
+  addPiece(bid,t,'b',f+'8');
+}
+
+/* gold particles for the finale */
+const P_COUNT = 200;
+const pGeo = new THREE.BufferGeometry();
+const pBase = new Float32Array(P_COUNT*3);
+const pSpeed = new Float32Array(P_COUNT);
+for(let i=0;i<P_COUNT;i++){
+  pBase[i*3]   = 1.5 + (Math.random()-.5)*4.5;
+  pBase[i*3+1] = .1 + Math.random()*.5;
+  pBase[i*3+2] = -2.5 + (Math.random()-.5)*4.5;
+  pSpeed[i] = .6 + Math.random()*1.4;
+}
+pGeo.setAttribute('position', new THREE.BufferAttribute(pBase.slice(), 3));
+const pMat = new THREE.PointsMaterial({color:0xe8c964, size:.07, transparent:true, opacity:0, depthWrite:false, blending:THREE.AdditiveBlending});
+const particles = new THREE.Points(pGeo, pMat);
+scene.add(particles);
+
+/* ============================================================
+   the game: scholar's mate — 7 half-moves
+============================================================ */
+const MOVES = [
+  {id:'wp_e', from:'e2', to:'e4', san:'1. e4',    side:'w', lift:.35},
+  {id:'bp_e', from:'e7', to:'e5', san:'e5',       side:'b', lift:.35},
+  {id:'wq',   from:'d1', to:'h5', san:'2. Фh5',   side:'w', lift:.55},
+  {id:'bn_b', from:'b8', to:'c6', san:'Кc6',      side:'b', lift:.95},
+  {id:'wb_f', from:'f1', to:'c4', san:'3. Сc4',   side:'w', lift:.5},
+  {id:'bn_g', from:'g8', to:'f6', san:'Кf6',      side:'b', lift:.95},
+  {id:'wq',   from:'h5', to:'f7', san:'4. Ф:f7#', side:'w', lift:.6, capture:'bp_f'}
+];
+
+/* stage weights: 0=hero, 1..7=moves, 8=mate hold */
+const W = [9, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 12, 9.5];
+const W_SUM = W.reduce((a,b)=>a+b,0);
+const CUM = []; { let acc=0; for(const w of W){ CUM.push(acc/W_SUM); acc+=w; } CUM.push(1); }
+
+function stageAt(p){
+  for(let i=W.length-1;i>=0;i--){
+    if(p>=CUM[i]) return {s:i, t:clamp((p-CUM[i])/(CUM[i+1]-CUM[i]),0,1)};
+  }
+  return {s:0,t:0};
+}
+
+/* camera keyframes: view at the START of each stage (+ final pull-back) */
+const CK = [
+  {tgt:[0,-.4,0],    az:0,    r:13,  h:5.6},
+  {tgt:[.5,.4,1.2],  az:.4,   r:7.4, h:3.0},
+  {tgt:[.5,.5,-.8],  az:-.45, r:7.0, h:3.3},
+  {tgt:[1.8,.6,.8],  az:.6,   r:6.6, h:2.6},
+  {tgt:[-1.4,.5,-2], az:-.55, r:6.8, h:3.6},
+  {tgt:[-.4,.5,1.4], az:.75,  r:6.2, h:2.5},
+  {tgt:[1.4,.5,-1.8],az:-.3,  r:6.0, h:3.1},
+  {tgt:[1.4,.6,-2],  az:.12,  r:5.2, h:2.2},
+  {tgt:[.8,.7,-2.6], az:-.18, r:5.8, h:2.6},
+  {tgt:[0,.4,-.5],   az:0,    r:11,  h:6.5}
+];
+function camOf(k){
+  return {
+    tgt: new THREE.Vector3(...k.tgt),
+    pos: new THREE.Vector3(k.tgt[0]+Math.sin(k.az)*k.r, k.tgt[1]+k.h, k.tgt[2]+Math.cos(k.az)*k.r)
+  };
+}
+
+/* clock: seconds consumed per stage (white thinks fast, market stalls) */
+const SPEND = {1:['w',18], 2:['b',31], 3:['w',47], 4:['b',58], 5:['w',23], 6:['b',84], 7:['w',12]};
+const START_TIME = 300;
+
+/* ============================================================
+   per-frame state application (pure function of progress)
+============================================================ */
+const blackKing = pieces['bk'];
+
+function applyState(s, t, time){
+  /* reset all pieces */
+  for(const id in pieces){
+    const p = pieces[id], q = sq(p.start);
+    p.group.position.set(q.x,0,q.z);
+    p.group.rotation.set(0,p.baseRotY,0);
+    p.group.scale.setScalar(1);
+    p.group.visible = true;
+  }
+
+  /* moves */
+  for(let i=0;i<MOVES.length;i++){
+    const mv = MOVES[i], ms = i+1;
+    let mt = s>ms ? 1 : s<ms ? 0 : easeIO(clamp((t-.22)/.56,0,1));
+    if(mt<=0) continue;
+    const a = sq(mv.from), b = sq(mv.to);
+    const g = pieces[mv.id].group;
+    g.position.x = lerp(a.x,b.x,mt);
+    g.position.z = lerp(a.z,b.z,mt);
+    g.position.y = Math.sin(Math.PI*mt)*mv.lift;
+    if(mv.capture){
+      const c = pieces[mv.capture];
+      const ct = clamp((mt-.45)/.4,0,1);
+      if(ct>0){
+        c.group.scale.setScalar(Math.max(.001,1-ct));
+        c.group.position.y = -ct*.5;
+        if(ct>=1) c.group.visible=false;
+      }
+    }
+  }
+
+  /* black king topples at mate */
+  const kt = s<8 ? 0 : easeIO(clamp((t-.08)/.55,0,1));
+  if(kt>0){
+    const ang = kt*1.5;
+    blackKing.group.rotation.z = -ang;
+    blackKing.group.position.x += kt*.55;
+    blackKing.group.position.y += Math.sin(Math.min(ang,1))*.12;
+  }
+
+  /* square highlights */
+  if(s>=1 && s<=7){
+    const mv = MOVES[s-1];
+    const a = sq(mv.from), b = sq(mv.to);
+    hFrom.position.set(a.x,.005,a.z);
+    hTo.position.set(b.x,.005,b.z);
+    const o = Math.sin(Math.PI*t)*.45;
+    hFrom.material.opacity = o*.6;
+    hTo.material.opacity = o;
+  } else if(s>=8){
+    const f7 = sq('f7');
+    hTo.position.set(f7.x,.005,f7.z);
+    hTo.material.opacity = .3+.15*Math.sin(time*3);
+    hFrom.material.opacity = 0;
+  } else {
+    hFrom.material.opacity = 0;
+    hTo.material.opacity = 0;
+  }
+
+  /* finale particles */
+  const pt = s<8 ? 0 : t;
+  pMat.opacity = Math.sin(Math.PI*Math.min(pt*1.15,1))*.85;
+  if(pt>0){
+    const pos = pGeo.attributes.position.array;
+    for(let i=0;i<P_COUNT;i++){
+      pos[i*3]   = pBase[i*3] + Math.sin(time*.8+i)*.15;
+      pos[i*3+1] = pBase[i*3+1] + pt*3*pSpeed[i];
+      pos[i*3+2] = pBase[i*3+2] + Math.cos(time*.7+i*2)*.15;
+    }
+    pGeo.attributes.position.needsUpdate = true;
+  }
+
+  /* camera */
+  const k0 = camOf(CK[s]), k1 = camOf(CK[Math.min(s+1,CK.length-1)]);
+  const ct = smooth(t,0,1);
+  const pos = k0.pos.lerp(k1.pos, ct);
+  const tgt = k0.tgt.lerp(k1.tgt, ct);
+  const sway = reduced ? 0 : 1;
+  camera.position.set(
+    pos.x + Math.sin(time*.4)*.12*sway,
+    pos.y + Math.sin(time*.27)*.07*sway,
+    pos.z
+  );
+  camera.lookAt(tgt);
+}
+
+/* ============================================================
+   HUD
+============================================================ */
+const elTimeW = document.getElementById('time-w');
+const elTimeB = document.getElementById('time-b');
+const elClkW  = document.getElementById('clk-w');
+const elClkB  = document.getElementById('clk-b');
+const elMove  = document.getElementById('move-no');
+const elHero  = document.getElementById('hero');
+const elMate  = document.getElementById('mate-overlay');
+const elHud   = document.getElementById('hud');
+const sansBox = document.getElementById('sans');
+const cards = [];
+for(let i=1;i<=7;i++) cards.push(document.getElementById('card-'+i));
+
+/* notation spans */
+const sanSpans = MOVES.map((mv,i)=>{
+  const sp = document.createElement('span');
+  sp.textContent = mv.san;
+  if(i===MOVES.length-1) sp.classList.add('mate');
+  sansBox.appendChild(sp);
+  return sp;
+});
+
+/* seamless ticker */
+const tickerTrack = document.getElementById('ticker-track');
+tickerTrack.innerHTML += tickerTrack.innerHTML;
+
+function fmt(sec){
+  sec = Math.max(0, Math.round(sec));
+  return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+}
+
+function applyHUD(s, t, p, time){
+  /* hero fade */
+  const heroA = 1 - smooth(p, 0, CUM[1]*.92);
+  elHero.style.opacity = heroA;
+  elHero.style.pointerEvents = heroA > .5 ? 'auto' : 'none';
+  elHero.style.transform = `translateY(${(1-heroA)*-40}px)`;
+
+  /* clocks */
+  let spentW=0, spentB=0;
+  for(let i=1;i<=7;i++){
+    const [side,dur] = SPEND[i];
+    const frac = s>i ? 1 : s<i ? 0 : t;
+    if(side==='w') spentW += dur*frac; else spentB += dur*frac;
+  }
+  elTimeW.textContent = fmt(START_TIME-spentW);
+  elTimeB.textContent = fmt(START_TIME-spentB);
+
+  const activeSide = (s>=1 && s<=7) ? SPEND[s][0] : (s===0 ? 'w' : null);
+  elClkW.classList.toggle('active', activeSide==='w');
+  elClkB.classList.toggle('active', activeSide==='b');
+  elClkB.classList.toggle('flag', s>=8);
+
+  elMove.textContent = s===0 ? 'ДЕБЮТ' : s>=8 ? 'МАТ' : `ХОД ${s}/7`;
+
+  /* notation reveal */
+  for(let i=0;i<MOVES.length;i++){
+    const done = (s>i+1) || (s===i+1 && t>.7);
+    sanSpans[i].classList.toggle('on', done);
+  }
+
+  /* move cards */
+  for(let i=0;i<7;i++){
+    const card = cards[i];
+    if(s!==i+1){ card.style.opacity=0; card.style.transform='translate(0,40px)'; continue; }
+    const a = smooth(t,.06,.24) * (1-smooth(t,.86,1));
+    card.style.opacity = a;
+    const isMobile = innerWidth<=720;
+    const base = isMobile ? '' : 'translateY(-50%)';
+    card.style.transform = `${base} translateY(${(1-smooth(t,.06,.24))*36}px)`;
+  }
+
+  /* mate overlay */
+  elMate.style.opacity = s<8 ? 0 : smooth(t,.12,.4);
+
+  /* fade whole HUD as content scrolls over */
+  const gameH = gameEl.offsetTop + gameEl.offsetHeight;
+  const fade = 1 - smooth(scrollY, gameH-1.35*innerHeight, gameH-.65*innerHeight);
+  elHud.style.opacity = fade;
+}
+
+/* ============================================================
+   scroll engine
+============================================================ */
+const gameEl = document.getElementById('game');
+let targetP = 0, smP = 0;
+
+function readScroll(){
+  const max = gameEl.offsetTop + gameEl.offsetHeight - innerHeight;
+  targetP = clamp(scrollY/Math.max(1,max), 0, 1);
+}
+addEventListener('scroll', readScroll, {passive:true});
+readScroll();
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  if(renderer) renderer.setSize(innerWidth, innerHeight);
+  readScroll();
+});
+
+document.getElementById('btn-start').addEventListener('click', ()=>{
+  const max = gameEl.offsetTop + gameEl.offsetHeight - innerHeight;
+  scrollTo({top: max*(CUM[1]+ (CUM[2]-CUM[1])*.55), behavior: reduced?'auto':'smooth'});
+});
+document.getElementById('btn-replay').addEventListener('click', ()=>{
+  scrollTo({top:0, behavior: reduced?'auto':'smooth'});
+});
+
+/* ============================================================
+   render loop
+============================================================ */
+const clock3 = new THREE.Clock();
+function frame(){
+  requestAnimationFrame(frame);
+  const time = clock3.getElapsedTime();
+  smP += (targetP-smP)*(reduced ? 1 : .09);
+  if(Math.abs(targetP-smP)<.0004) smP = targetP;
+  const {s,t} = stageAt(smP);
+  applyState(s,t,time);
+  applyHUD(s,t,smP,time);
+  if(renderer) renderer.render(scene,camera);
+}
+frame();
+</script>
+</body>
+</html>
