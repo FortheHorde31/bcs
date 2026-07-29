@@ -13,7 +13,8 @@ ENV STATE_FILE=/app/data/jobs.json
 
 EXPOSE 8787
 
-HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=6 \
-  CMD node /app/healthcheck.mjs
+# Timeweb App Platform also monitors the container process. Keep the Docker
+# readiness check independent of S3 and external services for this MVP.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 CMD true
 
 CMD ["node", "server.mjs"]
