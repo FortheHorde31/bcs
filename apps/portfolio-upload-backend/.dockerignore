@@ -1,0 +1,6 @@
+.env
+data
+fixtures
+scripts
+node_modules
+npm-debug.log
