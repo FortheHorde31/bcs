@@ -1,0 +1,14 @@
+{
+  "name": "bcs-portfolio-upload-prototype",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check public/widget.js && node --check scripts/test-flow.mjs && node --check scripts/configure-cors.mjs",
+    "cors": "node scripts/configure-cors.mjs",
+    "test:flow": "node scripts/test-flow.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
