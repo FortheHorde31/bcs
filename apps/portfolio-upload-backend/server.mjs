@@ -74,7 +74,19 @@ const server = createServer(async (request, response) => {
     const requestUrl = new URL(request.url || "/", "http://localhost");
     const pathname = requestUrl.pathname;
 
-    if (request.method === "GET" && pathname === "/api/health") {
+    if (
+      (request.method === "GET" || request.method === "HEAD") &&
+      pathname === "/api/health"
+    ) {
+      if (request.method === "HEAD") {
+        response.writeHead(200, {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "no-store",
+        });
+        response.end();
+        return;
+      }
+
       sendJson(response, 200, {
         ok: true,
         service: "portfolio-upload-prototype",
