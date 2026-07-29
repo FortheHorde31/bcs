@@ -14,6 +14,6 @@ ENV STATE_FILE=/app/data/jobs.json
 EXPOSE 8787
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=6 \
-  CMD ["node", "healthcheck.mjs"]
+  CMD node /app/healthcheck.mjs
 
 CMD ["node", "server.mjs"]
