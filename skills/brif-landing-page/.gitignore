@@ -1,0 +1,5 @@
+context/*
+!context/README.md
+output/*
+!output/README.md
+.DS_Store
